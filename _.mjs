@@ -103,9 +103,9 @@ function run(action, x) {
 
 function matchValue(patt, value) {
     // Extract data from Service Now data types before proceeding
-    if (isGlideRecord) {
+    if (isGlideRecord(value)) {
         value = extractRecord(value);
-    } else if (isGlideElement) {
+    } else if (isGlideElement(value)) {
         value = extractElement(value);
     }
 
