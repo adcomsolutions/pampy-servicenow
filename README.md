@@ -157,7 +157,7 @@ For the sake of simplicity, some undocumented & redundant exports have been stri
 
 | Removed    | Notes                                                |
 |------------|------------------------------------------------------|
-| ANY        | This was an alias for _, use _ instead               |
+| ANY        | This was an alias for \_, use \_ instead             |
 | REST       | This was an alias for TAIL, use _.tail instead       |
 | HEAD       | Unused in the original implementation & undocumented |
 | matchValue | Undocumented, seems to be for internal use only      |
