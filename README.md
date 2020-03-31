@@ -1,18 +1,21 @@
 # Pampy / Service Now
 [![License MIT](https://go-shields.herokuapp.com/license-MIT-blue.png)]()
+
 This is a semi-port of Pampy.js to Service Now. "Semi-port" meaning that the core functionality is left (almost) fully intact, but that the API itself has been modified for convenience in the context of Service Now. Code made with vanilla Pampy.js is *not* compatible!
 
 ## Changes
 
 ### Default Export
 
-Because Service Now does not have a requires/import keyword, we are forced to export a single variable to the global scope. This variable is '_' by default.
+Because Service Now does not have a requires/import API, we are forced to export a single variable to the global scope.
 
-### Bad Pattern Matches Return Null
+This variable is '_' by default.
+
+#### Bad Pattern Matches Return Null
 By default, Pampy would throw if a pattern match encountered an edge case that was not programmed in. This kind of "total function" enforcement is desirable in an FP environment, but not so much in Service Now, which generally favors terser scripting.
 Instead of throwing, we silently return null in these situations.
 
-#### Dual-Purpose Default
+#### Dual-Purpose Default Export
 To promote convenient use in shorter scripts, we make an effort to provide BOTH the pattern match expression and the 'ANY' expression in the same variable. This is much like how JQuery's $ export can be used as a function or a variable.
 
 ##### Example
@@ -31,7 +34,7 @@ The entire API has been adjusted, see the table below regarding the nature of ea
 | _.tail    | TAIL         | The REST alias for TAIL has been removed                                         |
 
 #### Removed API components
-For the sake of simplicity, some undocumented & redundant exports have been stripped
+For the sake of simplicity, some undocumented & redundant exports have been stripped.
 
 | Removed    | Notes                                                |
 |------------|------------------------------------------------------|
@@ -45,7 +48,10 @@ For the sake of simplicity, some undocumented & redundant exports have been stri
 | zipLongest | Undocumented, seems to be for internal use only      |
 
 ### Curried Matchers
-We curry our target argument, which fundamentally changes the usage of the _() and _.pairs() methods in comparison to the vanilla match()/matchPairs() functions. It means the patterns are provided first and the target value is provided second, in a argument set.
+We curry our target argument, which fundamentally changes the usage of the _() and _.pairs() methods in comparison to the vanilla match()/matchPairs() functions.
+
+This means that the patterns are provided _first_ and that the target value is provided second, in a separate argument set.
+
 #### Example
 
 ``` javascript
@@ -54,6 +60,7 @@ var ticketNumber = _({number: _}, parseInt)(taskGlideRecord);
 
 #### Rationale
 We do this for two reasons: composability and convenience
+
 ##### Composability
 Currying the function allows us to save a pattern match for later use with other GlideRecord values
 
@@ -82,16 +89,6 @@ There are some places where additional functionality has been embedded to stream
 #### Right-Handed _ Returns Input
 We extend the _ clause to return the input as-is when used on the right-handed side of a pattern match. This is effectively a subsitute for providing your own identity function
 
-``` javascript
-var handleTicketString = _(
-  Number, _,
-  String, _(
-    function(x){return x.startsWith('CS')}, function(x){return parseFloat(x.slice(2))},
-    function(x){return x.startsWith('INC')}, function(x){return parseFloat(x.slice(3))}
-  )
-)(ticketNumberInput);
-```
-
 ##### In Other Words
 
 ``` javascript
@@ -106,11 +103,11 @@ var numberOrNull = _(Number, function(x){return x})(myNumber);
 
 #### Date Handling
 Vanilla Pampy.js only supports Number/String/Boolean/Array/Function type matching. We extend this with Date matching.
+
 This includes type checking and equality comparisons.
 
 ##### Type Matching
-One can test strictly for a Date type. Keep in mind that Dates are also Objects, so it is adviseable to place a Date type check above any Object traversal in the same pattern match statement.
-This is a strict type check. Inputs that could potentially be cast to Date are still not considered to be a Date!
+One can test strictly for a Date type. 
 
 ``` javascript
 var isDate = _(
@@ -118,6 +115,10 @@ var isDate = _(
   _, false
 )(myMaybeDate);
 ```
+
+###### Caveats
+* This is a strict type check. Inputs that could potentially be cast to Date are still not considered to be a Date!
+* Keep in mind that Dates are also Objects, so it is adviseable to place a Date type check above any Object traversal in the same pattern match statement.
 
 ##### Equality Matching
 One may also test equality against a Date pattern. Equality is evaluated as a strict comparison of the input Date timestamps. Unlike type matching, we will attempt casting the right-hand value to a Date before comparing if it is a number or string.
@@ -132,12 +133,14 @@ var matchesATime = _(
 ```
 
 #### Automatic GlideElement conversion
-If a GlideRecord is supplied to a matcher, the GlideElement properties are opportunistically converted to an equivalent JS type. This works for values of types String, Number, Boolean, and Date. Unrepresentable types are converted to null (empty Dates, Journal fields, etc.).
-We don't have direct access to GlideElement type data, so this is a "best fit" conversion process. It is worth noting that, sometimes, this can sometimes have unexpected side effects (like dropping leading zeroes on number strings).
-
-Note that GlideDuration is also converted to a Date value. In these cases, the Date generated is equal to the length of the duration field, plus the Unix epoch.
+If a GlideRecord is supplied to a matcher, the GlideElement properties are opportunistically converted to an equivalent JS type. This works for values of type String, Number, Boolean, and Date. 
 
 This allows for strict equality checks. It also facilitates direct use of Pampy's built-in String/Number/Boolean/Date type matching.
+
+##### Caveats
+* Unrepresentable types are converted to null (empty Dates, Journal fields, etc.)
+* This is a "best fit" conversion process. It is worth noting that, sometimes, this can sometimes have unexpected side effects (like dropping leading zeroes on number strings).
+* Note that GlideDuration is also converted to a Date value. In these cases, the Date generated is equal to the length of the duration field, plus the Unix epoch.
 
 ##### Strict Equality on GlideRecord
 ``` javascript
@@ -157,7 +160,6 @@ var rawVendorTicketNumber = _(
 ```
 
 # Demonstrations
-Pampy.js is pretty small (250 lines, no dependencies), reasonably fast, and often makes your code more readable, and easier to reason about. There is also a [Python version](https://github.com/santinic/pampy) of Pampy.
 
 ## You can write many patterns
 Patterns are evaluated in the order they appear.
@@ -167,11 +169,10 @@ The operator _ means "any other case I didn't think of".
 
 ```javascript
 var fibFn = _(
-        1, 1,
-        2, 1,
-        _, function (x) { return fibFn(x - 1) + fibFn(x - 2) }
-    );
-}
+  1, 1,
+  2, 1,
+  _, function (x) { return fibFn(x - 1) + fibFn(x - 2) }
+);
 ```
 
 ## You can write a Lisp calculator in 5 lines
@@ -195,27 +196,27 @@ lisp([reduce, plus, [1, 2, 3]]);    // => 6
 
 ```javascript
 
-_(
-    3,                "this matches the number 3",
+var myString = _(
+  3,                "this matches the number 3",
 
-    Number,           "matches any JavaScript number",
+  Number,           "matches any JavaScript number",
 
-    [String, Number], function(a, b){ return "a typed Array [a, b] that you can use in a function" },
+  [String, Number], function(a, b){ return "a typed Array [a, b] that you can use in a function" },
 
-    [1, 2, _],        "any Array of 3 elements that begins with [1, 2]",
+  [1, 2, _],        "any Array of 3 elements that begins with [1, 2]",
 
-    {x: _},           "any Object with a key 'x' and any value associated",
+  {x: _},           "any Object with a key 'x' and any value associated",
 
-    _,                "anything else"
-)(x)
+  _                "anything else"
+)(x);
 ```
 
-## You can match _.tail
+## You can match the tail of an Array
 
 ```javascript
 x = [1, 2, 3];
 
-_([1, _.tail], _)(x);            // => [2, 3]
+_([1, _.tail], _)(x);    // => [2, 3]
 
 _([_, _.tail], _)(x);    // => [1, [2, 3])
 
@@ -229,7 +230,7 @@ x = [1, [2, 3], 4];
 _([1, [_, 3], _], function (a, b) { return [1, [a, 3], b] });   // => [1, [2, 3], 4]
 ```
 
-## You can nest Objects. And you can use _ as key!
+## You can nest Objects... And you can use _ as key!
 
 ```javascript
 pet = { type: 'dog', details: { age: 3 } };
