@@ -3,7 +3,130 @@
 
 This is a semi-port of Pampy.js to Service Now. "Semi-port" meaning that the core functionality is left (almost) fully intact, but that the API itself has been modified for convenience in the context of Service Now. Code made with vanilla Pampy.js is *not* compatible!
 
-## Changes
+# Demonstrations
+
+## You can write many patterns
+Patterns are evaluated in the order they appear.
+
+## You can write Fibonacci
+The operator _ means "any other case I didn't think of".
+
+```javascript
+var fibFn = _(
+  1, 1,
+  2, 1,
+  _, function (x) { return fibFn(x - 1) + fibFn(x - 2) }
+);
+```
+
+## You can write a Lisp calculator in 5 lines
+
+```javascript
+var lisp = _(
+  [Function, _.tail], function (f, rest) { return f.apply(null, rest.map(lisp)) },
+  Array,              function(l) { return l.map(lisp) },
+  _,                  _
+)
+function plus(a, b){ return a + b }
+function minus(a, b){ return a - b }
+function reduce(f, l){ return l.reduce(f) }
+
+lisp([plus, 1, 2]);                 // => 3
+lisp([plus, 1, [minus, 4, 2]]);     // => 3
+lisp([reduce, plus, [1, 2, 3]]);    // => 6
+```
+
+## You can match so many things!
+
+```javascript
+
+var myString = _(
+  3,                "this matches the number 3",
+
+  Number,           "matches any JavaScript number",
+
+  [String, Number], function(a, b){ return "a typed Array [a, b] that you can use in a function" },
+
+  [1, 2, _],        "any Array of 3 elements that begins with [1, 2]",
+
+  {x: _},           "any Object with a key 'x' and any value associated",
+
+  _                "anything else"
+)(x);
+```
+
+## You can match the tail of an Array
+
+```javascript
+x = [1, 2, 3];
+
+_([1, _.tail], _)(x);    // => [2, 3]
+
+_([_, _.tail], _)(x);    // => [1, [2, 3])
+
+```
+
+## You can nest Arrays
+
+```javascript
+x = [1, [2, 3], 4];
+
+_([1, [_, 3], _], function (a, b) { return [1, [a, 3], b] });   // => [1, [2, 3], 4]
+```
+
+## You can nest Objects... And you can use _ as key!
+
+```javascript
+pet = { type: 'dog', details: { age: 3 } };
+
+match(pet, {details: {age: _}}, _);        // => 3
+
+match(pet, {_: {age: _}}, _);          // => ['details', 3]
+```
+Admittedly using `_` as key is a bit of a trick, but it works for most situations.
+
+## You can use functions as patterns
+```javascript 
+_(
+  function(x){ x > 3 }, function(x){return x + ' is > 3'},
+  function(x){ x < 3 }, function(x){return x + ' is < 3'},
+  function(x){ x === 3 }, function(x){return x + ' is = 3'}
+)(x);
+```
+
+## You can pass [pattern, action] array pairs to _.pairs for better Prettier formatting.
+
+```javascript
+var fibFn = _.pairs(
+  [0, 0],
+  [1, 1],
+  [2, 1],
+  [3, 2],
+  [4, 3],
+  [_, function (x) {return fibFn(x - 1) + fibFn(x - 2)}]
+);
+```
+
+## All the things you can match
+
+| Pattern Example              | What it means                                            | Matched Example        | Arguments Passed to function  | NOT Matched Example     |
+| ---------------              | --------------                                           | ---------------        | ----------------------------- | ------------------      |
+| `"hello"`                    | only the string `"hello"` matches                        | `"hello"`              | nothing                       | any other value         |
+| `Number`                     | Any javascript number                                    | `2.35`                 | `2.35`                        | any other value         |
+| `String`                     | Any javascript string                                    | `"hello"`              | `"hello"`                     | any other value         |
+| `Date`                       | Any javascript date                                      | `new Date`             | `(Date object)`               | any other value         |
+| `Array`                      | Any array object                                         | `[1, 2]`               | `[1, 2]`                      | any other value         |
+| `_`                          | Any value                                                |                        | that value                    |                         |
+| `ANY`                        | The same as `_`                                          |                        | that value                    |                         |
+| `[1, 2, _]`                  | An Array that starts with 1, 2 and ends with any value   | `[1, 2, 3]`            | `3`                           | `[1, 2, 3, 4]`          |
+| `[1, 2, TAIL]`               | An Array that start with 1, 2 and ends with any sequence | `[1, 2, 3, 4]`         | `[3, 4]`                      | `[1, 7, 7, 7]`          |
+| `{type:'dog', age: _ }`      | Any Object with `type: "dog"` and with an age            | `{type:"dog", age: 3}` | `3`                           | `{type:"cat", age:2}`   |
+| `{type:'dog', age: Number }` | Any Object with `type: "dog"` and with an numeric age    | `{type:"dog", age: 3}` | `3`                           | `{type:"dog", age:2.3}` |
+| `x => x > 3`                 | Anything greater than 3                                  | `5`                    | `3`                           | `2`                     |
+| `null`                       | only `null`                                              | `null`                 | nothing                       | any other value         |
+| `undefined`                  | only `undefined`                                         | `undefined`            | nothing                       | any other value         |
+
+## Changes From vanilla Pampy.js
 
 ### Default Export
 
@@ -159,125 +282,3 @@ var rawVendorTicketNumber = _(
 )(taskGlideRecord.u_funky_vendor_number);
 ```
 
-# Demonstrations
-
-## You can write many patterns
-Patterns are evaluated in the order they appear.
-
-## You can write Fibonacci
-The operator _ means "any other case I didn't think of".
-
-```javascript
-var fibFn = _(
-  1, 1,
-  2, 1,
-  _, function (x) { return fibFn(x - 1) + fibFn(x - 2) }
-);
-```
-
-## You can write a Lisp calculator in 5 lines
-
-```javascript
-var lisp = _(
-  [Function, _.tail], function (f, rest) { return f.apply(null, rest.map(lisp)) },
-  Array,              function(l) { return l.map(lisp) },
-  _,                  _
-)
-function plus(a, b){ return a + b }
-function minus(a, b){ return a - b }
-function reduce(f, l){ return l.reduce(f) }
-
-lisp([plus, 1, 2]);                 // => 3
-lisp([plus, 1, [minus, 4, 2]]);     // => 3
-lisp([reduce, plus, [1, 2, 3]]);    // => 6
-```
-
-## You can match so many things!
-
-```javascript
-
-var myString = _(
-  3,                "this matches the number 3",
-
-  Number,           "matches any JavaScript number",
-
-  [String, Number], function(a, b){ return "a typed Array [a, b] that you can use in a function" },
-
-  [1, 2, _],        "any Array of 3 elements that begins with [1, 2]",
-
-  {x: _},           "any Object with a key 'x' and any value associated",
-
-  _                "anything else"
-)(x);
-```
-
-## You can match the tail of an Array
-
-```javascript
-x = [1, 2, 3];
-
-_([1, _.tail], _)(x);    // => [2, 3]
-
-_([_, _.tail], _)(x);    // => [1, [2, 3])
-
-```
-
-## You can nest Arrays
-
-```javascript
-x = [1, [2, 3], 4];
-
-_([1, [_, 3], _], function (a, b) { return [1, [a, 3], b] });   // => [1, [2, 3], 4]
-```
-
-## You can nest Objects... And you can use _ as key!
-
-```javascript
-pet = { type: 'dog', details: { age: 3 } };
-
-match(pet, {details: {age: _}}, _);        // => 3
-
-match(pet, {_: {age: _}}, _);          // => ['details', 3]
-```
-Admittedly using `_` as key is a bit of a trick, but it works for most situations.
-
-## You can use functions as patterns
-```javascript 
-_(
-  function(x){ x > 3 }, function(x){return x + ' is > 3'},
-  function(x){ x < 3 }, function(x){return x + ' is < 3'},
-  function(x){ x === 3 }, function(x){return x + ' is = 3'}
-)(x);
-```
-
-## You can pass [pattern, action] array pairs to _.pairs for better Prettier formatting.
-
-```javascript
-var fibFn = _.pairs(
-  [0, 0],
-  [1, 1],
-  [2, 1],
-  [3, 2],
-  [4, 3],
-  [_, function (x) {return fibFn(x - 1) + fibFn(x - 2)}]
-);
-```
-
-## All the things you can match
-
-| Pattern Example              | What it means                                            | Matched Example        | Arguments Passed to function  | NOT Matched Example     |
-| ---------------              | --------------                                           | ---------------        | ----------------------------- | ------------------      |
-| `"hello"`                    | only the string `"hello"` matches                        | `"hello"`              | nothing                       | any other value         |
-| `Number`                     | Any javascript number                                    | `2.35`                 | `2.35`                        | any other value         |
-| `String`                     | Any javascript string                                    | `"hello"`              | `"hello"`                     | any other value         |
-| `Date`                       | Any javascript date                                      | `new Date`             | `(Date object)`               | any other value         |
-| `Array`                      | Any array object                                         | `[1, 2]`               | `[1, 2]`                      | any other value         |
-| `_`                          | Any value                                                |                        | that value                    |                         |
-| `ANY`                        | The same as `_`                                          |                        | that value                    |                         |
-| `[1, 2, _]`                  | An Array that starts with 1, 2 and ends with any value   | `[1, 2, 3]`            | `3`                           | `[1, 2, 3, 4]`          |
-| `[1, 2, TAIL]`               | An Array that start with 1, 2 and ends with any sequence | `[1, 2, 3, 4]`         | `[3, 4]`                      | `[1, 7, 7, 7]`          |
-| `{type:'dog', age: _ }`      | Any Object with `type: "dog"` and with an age            | `{type:"dog", age: 3}` | `3`                           | `{type:"cat", age:2}`   |
-| `{type:'dog', age: Number }` | Any Object with `type: "dog"` and with an numeric age    | `{type:"dog", age: 3}` | `3`                           | `{type:"dog", age:2.3}` |
-| `x => x > 3`                 | Anything greater than 3                                  | `5`                    | `3`                           | `2`                     |
-| `null`                       | only `null`                                              | `null`                 | nothing                       | any other value         |
-| `undefined`                  | only `undefined`                                         | `undefined`            | nothing                       | any other value         |
