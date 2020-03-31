@@ -134,10 +134,6 @@ Because Service Now does not have a requires/import API, we are forced to export
 
 This variable is '_' by default.
 
-#### Bad Pattern Matches Return Null
-By default, Pampy would throw if a pattern match encountered an edge case that was not programmed in. This kind of "total function" enforcement is desirable in an FP environment, but not so much in Service Now, which generally favors terser scripting.
-Instead of throwing, we silently return null in these situations.
-
 #### Dual-Purpose Default Export
 To promote convenient use in shorter scripts, we make an effort to provide BOTH the pattern match expression and the 'ANY' expression in the same variable. This is much like how JQuery's $ export can be used as a function or a variable.
 
@@ -169,6 +165,10 @@ For the sake of simplicity, some undocumented & redundant exports have been stri
 | matchDict  | Undocumented, seems to be for internal use only      |
 | matchAll   | Undocumented, seems to be for internal use only      |
 | zipLongest | Undocumented, seems to be for internal use only      |
+
+### Bad Pattern Matches Return Null
+By default, Pampy would throw if a pattern match encountered an edge case that was not programmed in. This kind of "total function" enforcement is desirable in an FP environment, but not so much in Service Now, which generally favors terser scripting.
+Instead of throwing, we silently return null in these situations.
 
 ### Curried Matchers
 We curry our target argument, which fundamentally changes the usage of the _() and _.pairs() methods in comparison to the vanilla match()/matchPairs() functions.
