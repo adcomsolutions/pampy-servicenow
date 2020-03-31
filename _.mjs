@@ -20,12 +20,12 @@ function isDate(x) {
 }
 
 function isNumber(x) {
-    return typeof(value) === 'number' || value instanceof Number;
+    return typeof(x) === 'number' || x instanceof Number;
 }
 
 function isString(x) {
-    const isSymbol = isSymbolic(value);
-    const bool = typeof(value) === 'string' || value instanceof String;
+    const isSymbol = isSymbolic(x);
+    const bool = typeof(x) === 'string' || x instanceof String;
     return !isSymbol && bool;
 }
 
@@ -117,12 +117,13 @@ function matchValue(patt, value) {
         return [false, []];
     }
     else if (patt === String) {
-        if (isString(value)) return [bool, [value]];
+        if (isString(value))
+            return [true, [value]];
         else return [false, []];
     }
     else if (patt === Number) {
-        let bool = isNumber(value);
-        if (bool) return [bool, [value]];
+        if (isNumber(value))
+            return [true, [value]];
         else return [false, []];
     }
     else if (patt === Boolean) {
