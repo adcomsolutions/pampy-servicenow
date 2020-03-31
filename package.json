@@ -1,0 +1,34 @@
+{
+  "name": "pampy-servicenow",
+  "version": "1.0.0",
+  "description": "A semi-port of Pampy to Service Now environments",
+  "main": "_.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "sn-snowman": "^0.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "snowman --no-sync --background ./_.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adcomsolutions/pampy-servicenow.git"
+  },
+  "keywords": [
+    "servicenow",
+    "pampy",
+    "pattern-matching",
+    "library",
+    "utility"
+  ],
+  "author": "Christopher Crockett",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/adcomsolutions/pampy-servicenow/issues"
+  },
+  "homepage": "https://github.com/adcomsolutions/pampy-servicenow#readme"
+}
