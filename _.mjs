@@ -1,34 +1,99 @@
 "use strict";
 
-const PAD_VALUE = Symbol('PadValueType');
-const _ = Symbol('UnderscoreType');
-const ANY = _;
-const HEAD = Symbol('HeadType');
-const TAIL = Symbol('TailType');
-const REST = TAIL;
+const $_ = curryFn(match);
+const PAD_VALUE = '$$$PadValueType';
+const TAIL = '$$$TailType';
 
+function isSymbolic(x) {
+    return x === PAD_VALUE || x === TAIL
+}
 
 function isValue(x) {
     if (x === null || x === undefined) return true;
+    if (isSymbolic(x)) return false;
     const t = typeof(x);
     return t === 'number' || t === 'string' || t === 'boolean';
 }
 
-
-function isObject(x) {
-    return x instanceof Object && !Array.isArray(x) && !isValue(x);
+function isDate(x) {
+    return x instanceof Date;
 }
 
+function isNumber(x) {
+    return typeof(value) === 'number' || value instanceof Number;
+}
+
+function isString(x) {
+    const isSymbol = isSymbolic(value);
+    const bool = typeof(value) === 'string' || value instanceof String;
+    return !isSymbol && bool;
+}
+
+function isFunction(x) {
+    return x instanceof Function && x !== $_;
+}
+
+function isObject(x) {
+    return x instanceof Object && x != $_ && !Array.isArray(x) && !isValue(x);
+}
+
+function isGlideRecord(x) {
+    return x instanceof GlideRecord;
+}
+
+function isGlideElement(x) {
+    return x instanceof GlideElement;
+}
+
+// See my article on the SNOW community regarding the GlideRecord extraction methodology for details
+// https://community.servicenow.com/community?id=community_article&sys_id=a609281adb9f80505ed4a851ca96196b
+function extractRecord(glideRecord) {
+    const out = {};
+
+    for(key in glideRecord){
+        if(key === 'sys_meta') continue;
+        if(glideRecord[key] === null){
+            gs.debug('Attempted to access non-existent GlideRecord property ' + key);
+            continue;
+        }
+        out[key] = glideRecord.getValue(key) === null
+            ? ''
+            : glideRecord[key];
+    }
+
+    return out;
+}
+
+function extractElement(glideElement) {
+    var elementString = glideElement.toString();
+    if(elementString === 'true' || elementString === 'false')
+        return elementString === 'true';
+    if(!isNaN(parseFloat(elementString))){
+        if(isFinite(elementString))
+            return parseFloat(elementString);
+        if(glideElement.dateNumericValue)
+            return new Date(glideElement.dateNumericValue());
+    }
+    if(elementString === '') return null;
+    return elementString
+}
 
 function run(action, x) {
     if (isValue(action)) {
         return action;
     }
-    else if (action instanceof Function) {
+    else if (action instanceof Error) {
+        action.message = `Error thrown by matched pattern for ${x} (Type: ${typeof x}):\n${action.name}: ${action.message}\n`;
+        throw action;
+    }
+    else if (isFunction(action)) {
         return action.apply(null, x);
     }
     else if (isObject(action)) {
         return action;
+    }
+    else if (action === $_) {
+        return x;
     }
     else {
         throw new MatchError(`Unsupported action type ${typeof(action)} of action ${action}.`)
@@ -37,6 +102,13 @@ function run(action, x) {
 
 
 function matchValue(patt, value) {
+    // Extract data from Service Now data types before proceeding
+    if (isGlideRecord) {
+        value = extractRecord(value);
+    } else if (isGlideElement) {
+        value = extractElement(value);
+    }
+
     if (patt === '_') {
         // Behaves like UnderscoreType
         return [true, [value]];
@@ -45,12 +117,11 @@ function matchValue(patt, value) {
         return [false, []];
     }
     else if (patt === String) {
-        let bool = typeof(value) === 'string' || value instanceof String;
-        if (bool) return [bool, [value]];
+        if (isString(value)) return [bool, [value]];
         else return [false, []];
     }
     else if (patt === Number) {
-        let bool = typeof(value) === 'number' || value instanceof Number;
+        let bool = isNumber(value);
         if (bool) return [bool, [value]];
         else return [false, []];
     }
@@ -63,6 +134,11 @@ function matchValue(patt, value) {
         if (value instanceof Array) {
             return [true, [value]];
         }
+        else return [false, []];
+    }
+    else if (patt === Date) {
+        if(isDate(value))
+            return [true, [value]];
         else return [false, []];
     }
     else if (Array.isArray(patt)) {
@@ -81,14 +157,27 @@ function matchValue(patt, value) {
     else if (isValue(patt)) {
         return [patt === value, []]
     }
-    else if (patt instanceof Function) {
-        // console.log(`[${patt}] instanceof Function`);
+    else if (isDate(patt)) {
+        const dateEquality = (dateA, dateB) =>
+              dateA.getTime() === dateB.getTime()
+              ? [true, [value]]
+              : [false, []];
+
+        if (isDate(value)) {
+            return dateEquality(patt, value);
+        } else if (isNumber(value) || isString(value)) {
+            return dateEquality(patt, new Date(value))
+        } else {
+            return [false, []];
+        }
+    }
+    else if (patt === $_) {
+        return [true, [value]];
+    }
+    else if (isFunction(patt)) {
         let ret = patt(value);
         if (ret === true) return [true, [value]];
         else return [false, []];
-    }
-    else if (patt === _) {
-        return [true, [value]];
     }
     else if (isObject(patt)) {
         return matchDict(patt, value);
@@ -204,6 +293,8 @@ function matchPairs(x, ...pairs) {
       return run(action, extracted)
     }
   }
+  // Return null in a no match scenario instead of throwing, comment out the return if you want to enforce total functions
+  return null;
   throw new MatchError(`No _ provided, case ${x} not handled.`)
 }
 
@@ -219,15 +310,8 @@ function match(x) {
     return matchPairs(x, ...pairs)
 }
 
-function matchAll(rows) {
-    let total = [];
-    for (let i = 0; i < rows.length; i++) {
-        let row = rows[i];
-        let pairs = [...arguments].slice(1);
-        let res = match.apply(null, [row].concat(pairs));
-        total.push(res);
-    }
-    return total;
+function curryFn (fn) {
+    return (...args) => (target) => fn(target, ...args);
 }
 
 function zipLongest(a, b) {
@@ -241,25 +325,13 @@ function zipLongest(a, b) {
     return res;
 }
 
-class MatchError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'MatchError';
-    }
-}
+const MatchError = Class.create();
+MatchError.prototype = Object.extend(Error, {
+    name: 'MatchError',
+    type: 'MatchError'
+});
 
-module.exports = {
-    matchValue,
-    matchArray,
-    matchDict,
-    match,
-    matchAll,
-    matchPairs,
-    zipLongest,
-    PAD_VALUE,
-    _,
-    ANY,
-    HEAD,
-    TAIL,
-    REST
-};
+$_.pairs = curryFn(matchPairs);
+$_.tail = TAIL;
+
+export default $_;
