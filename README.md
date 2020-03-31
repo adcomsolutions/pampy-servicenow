@@ -109,22 +109,21 @@ var fibFn = _.pairs(
 
 ## All the things you can match
 
-| Pattern Example              | What it means                                            | Matched Example        | Arguments Passed to function  | NOT Matched Example     |
-| ---------------              | --------------                                           | ---------------        | ----------------------------- | ------------------      |
-| `"hello"`                    | only the string `"hello"` matches                        | `"hello"`              | nothing                       | any other value         |
-| `Number`                     | Any javascript number                                    | `2.35`                 | `2.35`                        | any other value         |
-| `String`                     | Any javascript string                                    | `"hello"`              | `"hello"`                     | any other value         |
-| `Date`                       | Any javascript date                                      | `new Date`             | `(Date object)`               | any other value         |
-| `Array`                      | Any array object                                         | `[1, 2]`               | `[1, 2]`                      | any other value         |
-| `_`                          | Any value                                                |                        | that value                    |                         |
-| `ANY`                        | The same as `_`                                          |                        | that value                    |                         |
-| `[1, 2, _]`                  | An Array that starts with 1, 2 and ends with any value   | `[1, 2, 3]`            | `3`                           | `[1, 2, 3, 4]`          |
-| `[1, 2, TAIL]`               | An Array that start with 1, 2 and ends with any sequence | `[1, 2, 3, 4]`         | `[3, 4]`                      | `[1, 7, 7, 7]`          |
-| `{type:'dog', age: _ }`      | Any Object with `type: "dog"` and with an age            | `{type:"dog", age: 3}` | `3`                           | `{type:"cat", age:2}`   |
-| `{type:'dog', age: Number }` | Any Object with `type: "dog"` and with an numeric age    | `{type:"dog", age: 3}` | `3`                           | `{type:"dog", age:2.3}` |
-| `x => x > 3`                 | Anything greater than 3                                  | `5`                    | `3`                           | `2`                     |
-| `null`                       | only `null`                                              | `null`                 | nothing                       | any other value         |
-| `undefined`                  | only `undefined`                                         | `undefined`            | nothing                       | any other value         |
+| Pattern Example                | What it means                                            | Matched Example        | Arguments Passed to function  | NOT Matched Example     |
+| ---------------                | --------------                                           | ---------------        | ----------------------------- | ------------------      |
+| `"hello"`                      | only the string `"hello"` matches                        | `"hello"`              | nothing                       | any other value         |
+| `Number`                       | Any javascript number                                    | `2.35`                 | `2.35`                        | any other value         |
+| `String`                       | Any javascript string                                    | `"hello"`              | `"hello"`                     | any other value         |
+| `Date`                         | Any javascript date                                      | `new Date`             | `(Date object)`               | any other value         |
+| `Array`                        | Any array object                                         | `[1, 2]`               | `[1, 2]`                      | any other value         |
+| `_`                            | Any value                                                |                        | that value                    |                         |
+| `[1, 2, _]`                    | An Array that starts with 1, 2 and ends with any value   | `[1, 2, 3]`            | `3`                           | `[1, 2, 3, 4]`          |
+| `[1, 2, _.tail]`               | An Array that start with 1, 2 and ends with any sequence | `[1, 2, 3, 4]`         | `[3, 4]`                      | `[1, 7, 7, 7]`          |
+| `{ type:'dog', age: _ }`       | Any Object with `type: "dog"` and with an age            | `{type:"dog", age: 3}` | `3`                           | `{type:"cat", age:2}`   |
+| `{ type:'dog', age: Number }`  | Any Object with `type: "dog"` and with an numeric age    | `{type:"dog", age: 3}` | `3`                           | `{type:"dog", age:2.3}` |
+| `function(x) { return x > 3 }` | Anything greater than 3                                  | `5`                    | `3`                           | `2`                     |
+| `null`                         | only `null`                                              | `null`                 | nothing                       | any other value         |
+| `undefined`                    | only `undefined`                                         | `undefined`            | nothing                       | any other value         |
 
 ## Changes From vanilla Pampy.js
 
