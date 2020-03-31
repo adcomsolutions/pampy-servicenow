@@ -224,6 +224,22 @@ Is equivalent to...
 var numberOrNull = _(Number, function(x){return x})(myNumber);
 ```
 
+
+#### Right-Handed Error Throws
+Providing an Error object or another object with the Error prototype to the right-hand side will automatically throw the supplied error.
+
+``` javascript
+var getTicketNumber = _(
+  Number, _
+  function(x) { return typeof(x) === 'string' && x.startsWith('CS') }, function(x){ return parseFloat(x.slice(2)) },
+  _, Error('Not a valid ticket number!')
+);
+```
+
+##### Caveats
+* It is not possible to pass the pattern match argument to the Error when composed this way
+* As a workaround, we programatically append information about the match argument to the Error message before throwing.
+
 #### Date Handling
 Vanilla Pampy.js only supports Number/String/Boolean/Array/Function type matching. We extend this with Date matching.
 
